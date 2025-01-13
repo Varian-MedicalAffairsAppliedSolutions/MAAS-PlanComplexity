@@ -33,7 +33,6 @@ namespace Views
         {
             InitializeComponent();
             DataContext = new View2Model(context);
-
         }
     }
 }

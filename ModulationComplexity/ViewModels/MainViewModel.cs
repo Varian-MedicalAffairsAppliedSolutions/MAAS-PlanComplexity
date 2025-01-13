@@ -17,6 +17,7 @@ namespace ViewModels
 	public class MainViewModel: BindableBase
     {
         private string myHeader;
+
         public string MyHeader
         {
             get { return myHeader; }
@@ -30,7 +31,6 @@ namespace ViewModels
             set { SetProperty(ref postText, value); }
         }
 
-
         private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
         {
             System.Diagnostics.Process.Start(
@@ -38,7 +38,6 @@ namespace ViewModels
              );
             e.Handled = true;
         }
-
 
         public MainViewModel(ScriptContext context, bool isValidated)
         {
@@ -48,6 +47,5 @@ namespace ViewModels
             if ( !isValidated ) { PostText += " *** Not Validated For Clinical Use ***"; }
 
         }
-
     }
 }

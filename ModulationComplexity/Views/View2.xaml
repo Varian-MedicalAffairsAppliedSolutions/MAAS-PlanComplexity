@@ -4,8 +4,7 @@
         xmlns:local="clr-namespace:Views" 
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         Height="580" Width="580">
-
-
+    
     <StackPanel Orientation="Vertical" Margin="0,0,0,0" IsEnabled="True">
         <TextBlock>Content 2 goes here ...</TextBlock>
     </StackPanel>

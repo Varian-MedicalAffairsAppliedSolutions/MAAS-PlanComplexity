@@ -7,7 +7,7 @@
     public class AssemblyExpirationDate : Attribute
     {
         /// <summary>
-        /// ExparationDate. 
+        /// ExpirationDate. 
         /// The format is always 'mm/dd/yyyy'
         /// </summary>
         string ExpirationDate { get; set; }

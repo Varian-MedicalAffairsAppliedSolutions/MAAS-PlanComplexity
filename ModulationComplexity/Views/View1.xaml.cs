@@ -36,10 +36,5 @@ namespace Views
         {
 
         }*/
-
-
-        
-
-     
     }
 }

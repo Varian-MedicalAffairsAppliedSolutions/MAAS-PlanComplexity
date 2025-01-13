@@ -19,17 +19,14 @@ using ModulationComplexity.Models;
 using Newtonsoft.Json;
 using System.Globalization;
 
-// TODO: Replace the following version attributes by creating AssemblyInfo.cs. You can do this in the properties of the Visual Studio project.
-
-
 // TODO: Uncomment the following line if the script requires write access.
-//15.x or later:
+// 15.x or later:
 [assembly: ESAPIScript(IsWriteable = true)]
 
 namespace VMS.TPS
 {
-  public class Script
-  {
+    public class Script
+    {
         string EULA_TEXT = @"""
             VARIAN LIMITED USE SOFTWARE LICENSE AGREEMENT
 
@@ -147,14 +144,15 @@ namespace VMS.TPS
             if (!File.Exists(json_path)) { throw new Exception($"Could not locate json path {json_path}"); }
 
             // Test
-            // Create serialized verion of settings
+            // Create serialized version of settings
             /*
             var settings = new SettingsClass();
             settings.Debug = false;
             settings.EULAAgreed = false;
             settings.Validated= false;
             settings.ExpirationDate = DateTime.Parse("1/1/2024");
-            File.WriteAllText(Path.Combine(path, "config.json"), JsonConvert.SerializeObject(settings));*/
+            File.WriteAllText(Path.Combine(path, "config.json"), JsonConvert.SerializeObject(settings));
+            */
 
             var settings = JsonConvert.DeserializeObject<SettingsClass>(File.ReadAllText(json_path));
 
@@ -176,14 +174,14 @@ namespace VMS.TPS
 
             // Check exp date
             //DateTime exp = settings.ExpirationDate;
-            
+
 
             if (exp < DateTime.Now && !foundNoExpire)
             {
                 MessageBox.Show("Application has expired. Newer builds with future expiration dates can be found here: https://github.com/Varian-Innovation-Center/MAAS-PlanComplexity");
                 return;
             }
-            
+
 
             // Initial EULA agreement
             if (!settings.EULAAgreed)
@@ -212,7 +210,7 @@ namespace VMS.TPS
             "Newer builds with future expiration dates can be found here: https://github.com/Varian-Innovation-Center/MAAS-PlanComplexity\n\n" +
             "See the FAQ for more information on how to remove this pop-up and expiration";
 
-            
+
 
 
             // Test
@@ -241,6 +239,5 @@ namespace VMS.TPS
             var mainWindow = new MainWindow(context, new MainViewModel(context, settings.Validated));
             mainWindow.ShowDialog();
         }
-    
-  }
+    }
 }

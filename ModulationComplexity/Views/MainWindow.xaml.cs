@@ -33,7 +33,6 @@ namespace Views
             DataContext = vm;
         }
 
-
         private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
         {
             // for .NET Core you need to add UseShellExecute = true

@@ -43,7 +43,7 @@ namespace ViewModels
         public DelegateCommand AboutCmd { get; set; }
 
         public DelegateCommand SaveCmd { get; set; }  
-       // public DelegateCommand ExeCmd { get; set; }
+        //public DelegateCommand ExeCmd { get; set; }
 
         private string ResultStr;
 
@@ -52,7 +52,6 @@ namespace ViewModels
         internal ComplexityModel ComplexityModel { get; }
 
         public DelegateCommand ShowWindowCmd { get;set ; }
-
 
         public View1Model(ScriptContext currentContext)
         {
@@ -80,7 +79,6 @@ namespace ViewModels
             };
 
             SubWindow.Closing += OnClosing;
-
         }
 
         private void OnClosing(object sender, CancelEventArgs e)
@@ -93,7 +91,6 @@ namespace ViewModels
         {
             SubWindow.Show();
         }
-
 
         private void OnSave()
         {
@@ -111,12 +108,8 @@ namespace ViewModels
 
                     // MessageBox.Show(msg);
                     MessageBox.Show(string.Format("CSV saved in {0}", savepath));
-
                 }
-
             }
-
         }
-
     }
 }

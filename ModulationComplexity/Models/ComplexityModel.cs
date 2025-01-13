@@ -137,8 +137,8 @@ namespace ModulationComplexity.Models
                     perimeter += Math.Min(Math.Abs(adjPosDiffA), Math.Abs(ap - bp));
                 }
 
-            EndIteration:
-                perimeter += (2.0 * this.leafThicknessesInMM[n]);
+                EndIteration:
+                    perimeter += (2.0 * this.leafThicknessesInMM[n]);
             }
 
             return perimeter;
@@ -180,13 +180,14 @@ namespace ModulationComplexity.Models
             // For each beam in the plan, calculate BI, BA and BM parameters
             foreach (var beam in plan.Beams)
             {
-                //Millennium120 leaf thicknesses
+                // Millennium120 leaf thicknesses
                 this.leafThicknessesInMM = new double[] { 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };
                 if (beam.MLC.Model == "Varian High Definition 120")
                 {
                     this.leafThicknessesInMM = new double[] { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 2.5, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
                 }
-                this.leafPairCount = 60; //for both M120 and HD120
+                // For both M120 and HD120
+                this.leafPairCount = 60; 
 
                 var cpModule = beam.ControlPoints;
                 // List<float> allPositions = new List<float>();
@@ -235,11 +236,11 @@ namespace ModulationComplexity.Models
                 avgALPO = ALPO_sum / beam.ControlPoints.Count();
                 stdALPO = Math.Sqrt(total_square_alpo / cpModule.Count() - avgALPO * avgALPO);
 
-                // MessageBox.Show(string.Format("area union: {0}, mtws: {1}", areaunion, String.Join(", ", mtws.ToArray())));
+                //MessageBox.Show(string.Format("area union: {0}, mtws: {1}", areaunion, String.Join(", ", mtws.ToArray())));
 
                 results[beam.Id].Add(new double[7] { avgArea, stdArea, avgALPO, stdALPO, BI, BA, BM });
-
             }
+
             var results_string = string.Format(
                 "Patient, {0}, {1}\nPlan, {2}, {3}\n\nField,avgArea,stdArea,ALPO,stdALPO,BI,BA,BM\n",
                 context.Patient.Id,
@@ -261,7 +262,6 @@ namespace ModulationComplexity.Models
                 {
                     retval.Add(new ListItem(entry.Key, subL));
                 }
-
             }
 
             /*

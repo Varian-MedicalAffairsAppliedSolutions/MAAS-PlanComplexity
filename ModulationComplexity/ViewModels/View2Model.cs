@@ -1,5 +1,4 @@
-﻿
-using Prism.Modularity;
+﻿using Prism.Modularity;
 using Prism.Mvvm;
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,6 @@ using System.Threading;
 using System.Windows;
 using VMS.TPS.Common.Model.API;
 using VMS.TPS.Common.Model.Types;
-
 
 namespace ViewModels
 {
@@ -23,8 +21,6 @@ namespace ViewModels
         {
             // ctor
             this.context = context;
-
         }
-
     }
 }
