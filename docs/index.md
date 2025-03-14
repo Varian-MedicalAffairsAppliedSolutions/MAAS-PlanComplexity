@@ -112,6 +112,6 @@ Agreement and the provision the parties intend to modify or amend.<br><br>
       scrolling="no"
 >
 </iframe>
-    <script src='https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js'></script>
-    <script>window.jotformEmbedHandler("iframe[id='JotFormIFrame-250725965230154']", "https://form.jotform.com/")</script>
+<script src='https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js'></script>
+<script>window.jotformEmbedHandler("iframe[id='JotFormIFrame-250725965230154']", "https://form.jotform.com/")</script>
     
