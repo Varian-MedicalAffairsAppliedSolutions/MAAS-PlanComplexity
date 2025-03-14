@@ -184,7 +184,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="docs\" />
+    <Folder Include="lusla\" />
     <Folder Include="NoCompileVer\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
