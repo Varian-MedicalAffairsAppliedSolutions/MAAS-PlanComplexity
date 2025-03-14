@@ -132,6 +132,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="EulaVerification\EulaVerifier.cs" />
+    <Compile Include="EulaVerification\EulaConfig.cs" />
     <Compile Include="FlexibleMessageBox.cs" />
     <Compile Include="CustomWidgets\BindableRichTextBox.cs" />
     <Compile Include="Models\ComplexityModel.cs" />
@@ -175,7 +177,6 @@
     <Resource Include="Resources\About.rtf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
-    <None Include="VarianLUSLA.pdf" />
   </ItemGroup>
   <ItemGroup>
     <None Include="License.txt">
@@ -183,6 +184,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="docs\" />
     <Folder Include="NoCompileVer\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
