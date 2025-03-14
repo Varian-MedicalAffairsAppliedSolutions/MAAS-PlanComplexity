@@ -1,11 +1,6 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\.github",
-    "\\.github\\workflows",
-    "\\ModulationComplexity",
-    "\\ModulationComplexity\\Views"
+    ""
   ],
-  "SelectedNode": "\\ModulationComplexity\\FlexibleMessageBox.cs",
   "PreviewInSolutionExplorer": false
 }
