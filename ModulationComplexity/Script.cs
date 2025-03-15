@@ -30,23 +30,24 @@ namespace VMS.TPS
 {
     public class Script
     {
-        // Define the project information for EULA verification - change these for each project
+        // Define the project information for EULA verification
         private const string PROJECT_NAME = "PlanComplexity";
-        private const string GITHUB_PAGES_URL = "https://varian-medicalaffairsappliedsolutions.github.io/MAAS-PlanComplexity";
+        private const string PROJECT_VERSION = "1.0.0";
+        private const string GITHUB_PAGES_URL = "https://varian-medicalaffairsappliedsolutions.github.io/MAAS-PlanComplexity/";
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         public void Execute(ScriptContext context)
         {
             try
             {
-                // Check JotForm EULA acceptance first
-                var eulaVerifier = new EulaVerifier(PROJECT_NAME, GITHUB_PAGES_URL);
+                // Check JotForm EULA acceptance first with version support
+                var eulaVerifier = new EulaVerifier(PROJECT_NAME, PROJECT_VERSION, GITHUB_PAGES_URL);
 
-                // If the JotForm EULA hasn't been accepted, show the verification dialog
+                // If the JotForm EULA hasn't been accepted for this version, show the verification dialog
                 if (!eulaVerifier.IsEulaAccepted())
                 {
                     MessageBox.Show(
-                        "This application requires EULA acceptance before use.\n\n" +
+                        $"This version of {PROJECT_NAME} (v{PROJECT_VERSION}) requires EULA acceptance before use.\n\n" +
                         "You will be prompted to provide an access code. Please follow the instructions to obtain your code.",
                         "EULA Acceptance Required",
                         MessageBoxButton.OK,
@@ -58,7 +59,7 @@ namespace VMS.TPS
                     {
                         // Adjust the assembly name if needed to match your project
                         string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
-                        qrCode = new BitmapImage(new Uri($"pack://application:,,,/{assemblyName};component/Resources/qrcode.png"));
+                        qrCode = new BitmapImage(new Uri($"pack://application:,,,/{assemblyName};component/Resources/qrcode.bmp"));
                     }
                     catch (Exception ex)
                     {

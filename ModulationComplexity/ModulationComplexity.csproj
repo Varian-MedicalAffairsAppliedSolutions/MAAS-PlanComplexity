@@ -184,8 +184,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="lusla\" />
     <Folder Include="NoCompileVer\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Resources\qrcode.bmp">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,27 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Xml.Serialization;
+using System.Text;
+using Newtonsoft.Json;
 
 namespace MAAS.Common.EulaVerification
 {
     /// <summary>
-    /// Configuration class for storing EULA acceptance information
+    /// Configuration class for storing EULA acceptance information with version support
     /// </summary>
     public class EulaConfig
     {
-        // Dictionary to store accepted EULAs
+        // Dictionary to store accepted EULAs with versions
+        // Key: ProjectName-Version, Value: Access code
         public Dictionary<string, string> AcceptedEulas { get; set; } = new Dictionary<string, string>();
 
-        // Path to the config file - stored in user's local app data
-        // Changed from readonly to allow deserialization to modify it
+        // Path to the config file - not serialized
+        [JsonIgnore]
         private string _configPath;
-
-        public string ConfigPath
-        {
-            get { return _configPath; }
-            set { _configPath = value; }
-        }
 
         // Default constructor for serialization
         public EulaConfig()
@@ -41,18 +37,20 @@ namespace MAAS.Common.EulaVerification
         {
             string configPath = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "MAAS", projectFolder, "EulaConfig.xml");
+                "MAAS", projectFolder, "EulaConfig.json");
 
-            EulaConfig config = null;
+            EulaConfig config = new EulaConfig(configPath);
 
             try
             {
                 if (File.Exists(configPath))
                 {
-                    var serializer = new XmlSerializer(typeof(EulaConfig));
-                    using (var stream = File.OpenRead(configPath))
+                    string json = File.ReadAllText(configPath);
+                    var loadedConfig = JsonConvert.DeserializeObject<EulaConfig>(json);
+
+                    if (loadedConfig != null)
                     {
-                        config = (EulaConfig)serializer.Deserialize(stream);
+                        config.AcceptedEulas = loadedConfig.AcceptedEulas;
                     }
                 }
             }
@@ -60,14 +58,6 @@ namespace MAAS.Common.EulaVerification
             {
                 System.Diagnostics.Debug.WriteLine($"Error loading EULA config: {ex.Message}");
             }
-
-            if (config == null)
-            {
-                config = new EulaConfig();
-            }
-
-            // Always set the config path
-            config.ConfigPath = configPath;
 
             return config;
         }
@@ -80,17 +70,34 @@ namespace MAAS.Common.EulaVerification
             try
             {
                 // Ensure directory exists
-                Directory.CreateDirectory(Path.GetDirectoryName(_configPath));
-
-                var serializer = new XmlSerializer(typeof(EulaConfig));
-                using (var stream = File.Create(_configPath))
+                string directory = Path.GetDirectoryName(_configPath);
+                if (!Directory.Exists(directory))
                 {
-                    serializer.Serialize(stream, this);
+                    Directory.CreateDirectory(directory);
+                }
+
+                // Serialize to JSON
+                string json = JsonConvert.SerializeObject(this, Formatting.Indented);
+
+                // Write to file
+                File.WriteAllText(_configPath, json, Encoding.UTF8);
+
+                // Verify the file was created
+                if (File.Exists(_configPath))
+                {
+                    System.Diagnostics.Debug.WriteLine($"Successfully saved EULA config to: {_configPath}");
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to save EULA config to: {_configPath}");
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error saving EULA config: {ex.Message}");
+                // Add more detailed error information
+                System.Diagnostics.Debug.WriteLine($"Path: {_configPath}");
+                System.Diagnostics.Debug.WriteLine($"Exception details: {ex}");
             }
         }
     }
