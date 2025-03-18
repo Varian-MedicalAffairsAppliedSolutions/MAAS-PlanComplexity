@@ -73,6 +73,9 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="EulaVerification">
+      <HintPath>..\..\EulaVerification\EulaVerification\bin\Debug\EulaVerification.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.Practices.ServiceLocation, Version=1.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>packages\CommonServiceLocator.1.3\lib\portable-net4+sl5+netcore45+wpa81+wp8\Microsoft.Practices.ServiceLocation.dll</HintPath>
     </Reference>
@@ -129,8 +132,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EulaVerification\EulaVerifier.cs" />
-    <Compile Include="EulaVerification\EulaConfig.cs" />
     <Compile Include="FlexibleMessageBox.cs" />
     <Compile Include="CustomWidgets\BindableRichTextBox.cs" />
     <Compile Include="Models\ComplexityModel.cs" />
