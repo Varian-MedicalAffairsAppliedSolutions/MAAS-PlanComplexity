@@ -32,7 +32,8 @@ namespace VMS.TPS
         // Define the project information for EULA verification
         private const string PROJECT_NAME = "PlanComplexity";
         private const string PROJECT_VERSION = "1.0.0";
-        private const string GITHUB_PAGES_URL = "https://varian-medicalaffairsappliedsolutions.github.io/MAAS-PlanComplexity/";
+        private const string LICENSE_URL = "https://varian-medicalaffairsappliedsolutions.github.io/MAAS-PlanComplexity";
+        private const string GITHUB_URL = "https://github.com/Varian-MedicalAffairsAppliedSolutions/MAAS-PlanComplexity";
 
         [MethodImpl(MethodImplOptions.NoInlining)]
         public void Execute(ScriptContext context)
@@ -40,7 +41,7 @@ namespace VMS.TPS
             try
             {
                 // Check license acceptance first with version support
-                var eulaVerifier = new EulaVerifier(PROJECT_NAME, PROJECT_VERSION, GITHUB_PAGES_URL);
+                var eulaVerifier = new EulaVerifier(PROJECT_NAME, PROJECT_VERSION, LICENSE_URL);
 
                 // Get access to the EulaConfig
                 var eulaConfig = EulaConfig.Load(PROJECT_NAME);
@@ -106,7 +107,7 @@ namespace VMS.TPS
                 // Check exp date
                 if (exp < DateTime.Now && !foundNoExpire)
                 {
-                    MessageBox.Show($"Application has expired. Newer builds with future expiration dates can be found here: {GITHUB_PAGES_URL}");
+                    MessageBox.Show($"Application has expired. Newer builds with future expiration dates can be found here: {GITHUB_URL}");
                     return;
                 }
 
@@ -114,12 +115,12 @@ namespace VMS.TPS
                 string msg = $"The current ModulationComplexity application is provided AS IS as a non-clinical, research only tool in evaluation only. The current " +
                 $"application will only be available until {exp.Date} after which the application will be unavailable. " +
                 "By Clicking 'Yes' you agree that this application will be evaluated and not utilized in providing planning decision support\n\n" +
-                $"Newer builds with future expiration dates can be found here: {GITHUB_PAGES_URL}\n\n" +
+                $"Newer builds with future expiration dates can be found here: {GITHUB_URL}\n\n" +
                 "See the FAQ for more information on how to remove this pop-up and expiration";
 
                 string msg2 = $"Application will only be available until {exp.Date} after which the application will be unavailable. " +
                 "By Clicking 'Yes' you agree that this application will be evaluated and not utilized in providing planning decision support\n\n" +
-                $"Newer builds with future expiration dates can be found here: {GITHUB_PAGES_URL} \n\n" +
+                $"Newer builds with future expiration dates can be found here: {GITHUB_URL} \n\n" +
                 "See the FAQ for more information on how to remove this pop-up and expiration";
 
                 if (!foundNoExpire)

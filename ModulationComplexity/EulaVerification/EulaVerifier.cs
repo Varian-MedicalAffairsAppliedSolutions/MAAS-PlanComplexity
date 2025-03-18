@@ -20,7 +20,7 @@ namespace MAAS.Common.EulaVerification
         private readonly EulaConfig _config;
         private readonly string _projectName;
         private readonly string _version;
-        private readonly string _githubPagesUrl;
+        private readonly string _licenseUrl;
         private readonly string _secretKey;
 
         /// <summary>
@@ -28,12 +28,12 @@ namespace MAAS.Common.EulaVerification
         /// </summary>
         /// <param name="projectName">Project name</param>
         /// <param name="version">Project version (required)</param>
-        /// <param name="githubPagesUrl">URL to the GitHub Page site with the JotForm</param>
+        /// <param name="licenseUrl">URL to the GitHub Page site with the JotForm</param>
         /// <param name="secretKey">Secret key used for code verification</param>
         public EulaVerifier(
             string projectName,
             string version,
-            string githubPagesUrl,
+            string licenseUrl,
             string secretKey = "VarianMAASSecretKey2025")
         {
             if (string.IsNullOrEmpty(version))
@@ -41,7 +41,7 @@ namespace MAAS.Common.EulaVerification
 
             _projectName = projectName;
             _version = version;
-            _githubPagesUrl = githubPagesUrl;
+            _licenseUrl = licenseUrl;
             _secretKey = secretKey;
 
             try
@@ -173,8 +173,8 @@ namespace MAAS.Common.EulaVerification
 
             // Create the hyperlink inline
             Hyperlink link = new Hyperlink();
-            link.Inlines.Add(_githubPagesUrl);
-            link.NavigateUri = new Uri(_githubPagesUrl);
+            link.Inlines.Add(_licenseUrl);
+            link.NavigateUri = new Uri(_licenseUrl);
             link.RequestNavigate += (sender, e) =>
             {
                 System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
