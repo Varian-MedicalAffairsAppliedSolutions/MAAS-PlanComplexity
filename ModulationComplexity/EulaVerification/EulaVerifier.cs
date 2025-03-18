@@ -1,10 +1,14 @@
 ﻿using System;
-using System.Security.Cryptography;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Security.Cryptography;
+using System.Text;
+using System.IO;
+using System.Reflection;
+using System.Collections.Generic;
 
 namespace MAAS.Common.EulaVerification
 {
@@ -39,7 +43,18 @@ namespace MAAS.Common.EulaVerification
             _version = version;
             _githubPagesUrl = githubPagesUrl;
             _secretKey = secretKey;
-            _config = EulaConfig.Load(projectName);
+
+            try
+            {
+                _config = EulaConfig.Load(projectName);
+                System.Diagnostics.Debug.WriteLine($"Successfully loaded EulaConfig for {projectName}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading EulaConfig: {ex.Message}");
+                // Create an empty config as fallback
+                _config = new EulaConfig();
+            }
         }
 
         /// <summary>
@@ -50,10 +65,18 @@ namespace MAAS.Common.EulaVerification
             string configKey = GetConfigKey();
             System.Diagnostics.Debug.WriteLine($"Checking EULA acceptance for: {configKey}");
 
+            // Debug: List all entries in config
+            foreach (var key in _config.AcceptedEulas.Keys)
+            {
+                System.Diagnostics.Debug.WriteLine($"Found entry: {key} = {_config.AcceptedEulas[key]}");
+            }
+
             if (_config.AcceptedEulas.TryGetValue(configKey, out string storedCode))
             {
                 // Verify the stored code is valid
-                return VerifyEulaCode(storedCode);
+                bool isValid = VerifyEulaCode(storedCode);
+                System.Diagnostics.Debug.WriteLine($"Stored code found. Valid: {isValid}");
+                return isValid;
             }
 
             // Check if any previous version has been accepted
@@ -67,12 +90,14 @@ namespace MAAS.Common.EulaVerification
                     if (key.StartsWith($"{_projectName}-{majorVersion}"))
                     {
                         string oldCode = _config.AcceptedEulas[key];
+                        System.Diagnostics.Debug.WriteLine($"Found previous version acceptance: {key}");
                         // Optionally validate with older version's code
                         return true;
                     }
                 }
             }
 
+            System.Diagnostics.Debug.WriteLine("No valid EULA acceptance found");
             return false;
         }
 
@@ -100,7 +125,6 @@ namespace MAAS.Common.EulaVerification
             return version;
         }
 
-
         /// <summary>
         /// Show the EULA acceptance dialog
         /// </summary>
@@ -109,21 +133,21 @@ namespace MAAS.Common.EulaVerification
             // Create WPF window for EULA acceptance
             Window eulaWindow = new Window
             {
-                Title = $"EULA Acceptance - {_projectName} v({_version})",
+                Title = $"License Acceptance - {_projectName} v({_version})",
                 Width = 600,
                 Height = 400,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                ResizeMode = ResizeMode.NoResize
+                ResizeMode = ResizeMode.NoResize,
+                Background = Brushes.White
             };
 
             // Create layout
             Grid grid = new Grid();
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(60) });
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(150) });
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(40) });
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(150) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
             // Introductory message
             TextBlock introMessage = new TextBlock
@@ -135,30 +159,42 @@ namespace MAAS.Common.EulaVerification
                 VerticalAlignment = VerticalAlignment.Center
             };
             Grid.SetRow(introMessage, 0);
-            
+            grid.Children.Add(introMessage);
 
             // Instructions
-            TextBox instructions = new TextBox
+            TextBlock instructions = new TextBlock
             {
-                Text = $"Please visit {_githubPagesUrl} or use the QR code below to accept the EULA and receive your access code.",
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(20, 5, 20, 10),
-                VerticalAlignment = VerticalAlignment.Center,
-                IsReadOnly = true,
-                BorderThickness = new Thickness(0),
-                Background = System.Windows.Media.Brushes.Transparent,
-                IsTabStop = false,
-                AcceptsReturn = false,
-                AcceptsTab = false,
-                IsReadOnlyCaretVisible = false
+                VerticalAlignment = VerticalAlignment.Center
             };
+
+            // Create the hyperlink inline
+            Hyperlink link = new Hyperlink();
+            link.Inlines.Add(_githubPagesUrl);
+            link.NavigateUri = new Uri(_githubPagesUrl);
+            link.RequestNavigate += (sender, e) =>
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = e.Uri.AbsoluteUri,
+                    UseShellExecute = true
+                });
+                e.Handled = true;
+            };
+
+            // Add text with embedded hyperlink
+            instructions.Inlines.Add("Please visit ");
+            instructions.Inlines.Add(link);
+            instructions.Inlines.Add(" or use the QR code below to accept the license and receive your access code.");
+
             Grid.SetRow(instructions, 1);
-          
-            
+            grid.Children.Add(instructions);
 
             // QR Code Image
             if (qrCodeImage != null)
             {
+                // Create a NEW image control each time
                 Image qrImage = new Image
                 {
                     Source = qrCodeImage,
@@ -219,12 +255,14 @@ namespace MAAS.Common.EulaVerification
                 BorderThickness = new Thickness(2),
                 VerticalContentAlignment = VerticalAlignment.Center,
                 Padding = new Thickness(4),
-                Background = Brushes.White
+                Background = Brushes.White,
+                Foreground = Brushes.Black
             };
 
             codePanel.Children.Add(codeLabel);
             codePanel.Children.Add(codeTextBox);
             Grid.SetRow(codePanel, 3);
+            grid.Children.Add(codePanel);
 
             // Buttons
             StackPanel buttonPanel = new StackPanel
@@ -239,26 +277,24 @@ namespace MAAS.Common.EulaVerification
                 Content = "Verify",
                 Width = 80,
                 Height = 25,
-                Margin = new Thickness(0, 0, 10, 0)
+                Margin = new Thickness(0, 0, 10, 0),
+                Background = Brushes.LightGray
             };
 
             Button cancelButton = new Button
             {
                 Content = "Cancel",
                 Width = 80,
-                Height = 25
+                Height = 25,
+                Background = Brushes.LightGray
             };
 
             buttonPanel.Children.Add(verifyButton);
             buttonPanel.Children.Add(cancelButton);
             Grid.SetRow(buttonPanel, 4);
-
-            // Add all controls to grid
-            grid.Children.Add(introMessage);
-            grid.Children.Add(instructions);
-            grid.Children.Add(codePanel);
             grid.Children.Add(buttonPanel);
 
+            // Important: set the content only once at the end
             eulaWindow.Content = grid;
 
             // Set up event handlers
@@ -270,16 +306,60 @@ namespace MAAS.Common.EulaVerification
 
                 if (VerifyEulaCode(code))
                 {
-                    // Store with the proper key that includes version
-                    _config.AcceptedEulas[GetConfigKey()] = code;
-                    _config.Save();
+                    string configKey = GetConfigKey();
+
+                    // Directly modify the EulaEntries list 
+                    if (_config.EulaEntries == null)
+                    {
+                        _config.EulaEntries = new List<EulaEntry>();
+                    }
+
+                    // Check if entry already exists
+                    bool found = false;
+                    foreach (var entry in _config.EulaEntries)
+                    {
+                        if (entry.Key == configKey)
+                        {
+                            entry.Value = code; // Update existing entry
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found)
+                    {
+                        // Add new entry
+                        _config.EulaEntries.Add(new EulaEntry { Key = configKey, Value = code });
+                    }
+
+                    // Also update the dictionary for in-memory use
+                    _config.AcceptedEulas[configKey] = code;
+
+                    // Try to save
+                    bool saveSuccess = _config.Save();
+
+                    if (!saveSuccess)
+                    {
+                        // Fallback: Create simple text file as backup
+                        try
+                        {
+                            string dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                            string backupPath = Path.Combine(dir, $"{_projectName}_accepted.txt");
+                            File.WriteAllText(backupPath, $"{configKey}={code}");
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Backup save failed: {ex.Message}");
+                        }
+                    }
+
                     result = true;
                     eulaWindow.Close();
                 }
                 else
                 {
                     MessageBox.Show("Invalid access code. Please try again.", "Error",
-                                    MessageBoxButton.OK, MessageBoxImage.Error);
+                                   MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             };
 
@@ -293,7 +373,7 @@ namespace MAAS.Common.EulaVerification
             return result;
         }
 
-        // <summary>
+        /// <summary>
         /// Verify an EULA acceptance code using SHA256
         /// </summary>
         private bool VerifyEulaCode(string inputCode)
@@ -314,7 +394,7 @@ namespace MAAS.Common.EulaVerification
                     string expectedHash = BitConverter.ToString(expectedHashBytes).Replace("-", "").ToLowerInvariant();
 
                     // Format the code exactly as it appears in your JotForm email
-                    string expectedShortCode = $"MAAS-{_projectName.Substring(0, Math.Min(4, _projectName.Length))}-{expectedHash.Substring(0, 8)}";
+                    string expectedShortCode = expectedHash.Substring(0, 8);
 
                     // Compare with input - case insensitive
                     return string.Equals(inputCode, expectedShortCode, StringComparison.OrdinalIgnoreCase);
@@ -342,7 +422,7 @@ namespace MAAS.Common.EulaVerification
                 string expectedHash = BitConverter.ToString(expectedHashBytes).Replace("-", "").ToLowerInvariant();
 
                 // Take first 8 characters to create a more user-friendly code
-                return $"MAAS-{projectName.Substring(0, Math.Min(4, projectName.Length))}-{expectedHash.Substring(0, 8)}";
+                return expectedHash.Substring(0, 8);
             }
         }
     }

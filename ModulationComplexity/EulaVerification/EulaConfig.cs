@@ -1,104 +1,171 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text;
-using Newtonsoft.Json;
+using System.Xml.Serialization;
 
 namespace MAAS.Common.EulaVerification
 {
-    /// <summary>
-    /// Configuration class for storing EULA acceptance information with version support
-    /// </summary>
+    [Serializable]
     public class EulaConfig
     {
-        // Dictionary to store accepted EULAs with versions
-        // Key: ProjectName-Version, Value: Access code
-        public Dictionary<string, string> AcceptedEulas { get; set; } = new Dictionary<string, string>();
-
-        // Path to the config file - not serialized
-        [JsonIgnore]
-        private string _configPath;
-
-        // Default constructor for serialization
+        // Important: The default constructor must initialize the list
         public EulaConfig()
         {
+            EulaEntries = new List<EulaEntry>();
         }
 
         // Constructor with config path
         public EulaConfig(string configPath)
         {
             _configPath = configPath;
+            EulaEntries = new List<EulaEntry>();
         }
 
-        /// <summary>
-        /// Load the configuration from disk
-        /// </summary>
-        public static EulaConfig Load(string projectFolder)
+        // This is the XML-serializable list
+        [XmlArray("AcceptedEulas")]
+        [XmlArrayItem("EulaEntry")]
+        public List<EulaEntry> EulaEntries { get; set; }
+
+        // This is for easier access in code, but it's not serialized
+        [XmlIgnore]
+        private Dictionary<string, string> _acceptedEulasDict;
+
+        // Path to the config file - not serialized
+        [XmlIgnore]
+        private string _configPath;
+
+        [XmlIgnore]
+        public Dictionary<string, string> AcceptedEulas
         {
-            string configPath = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "MAAS", projectFolder, "EulaConfig.json");
-
-            EulaConfig config = new EulaConfig(configPath);
-
-            try
+            get
             {
-                if (File.Exists(configPath))
+                if (_acceptedEulasDict == null)
                 {
-                    string json = File.ReadAllText(configPath);
-                    var loadedConfig = JsonConvert.DeserializeObject<EulaConfig>(json);
+                    _acceptedEulasDict = new Dictionary<string, string>();
 
-                    if (loadedConfig != null)
+                    // Only populate if EulaEntries exists and has items
+                    if (EulaEntries != null)
                     {
-                        config.AcceptedEulas = loadedConfig.AcceptedEulas;
+                        foreach (var entry in EulaEntries)
+                        {
+                            _acceptedEulasDict[entry.Key] = entry.Value;
+                        }
+                    }
+                }
+                return _acceptedEulasDict;
+            }
+            set
+            {
+                _acceptedEulasDict = value;
+
+                // Make sure EulaEntries exists
+                if (EulaEntries == null)
+                {
+                    EulaEntries = new List<EulaEntry>();
+                }
+                else
+                {
+                    EulaEntries.Clear();
+                }
+
+                // Only process if we have a dictionary with entries
+                if (_acceptedEulasDict != null)
+                {
+                    foreach (var kvp in _acceptedEulasDict)
+                    {
+                        EulaEntries.Add(new EulaEntry { Key = kvp.Key, Value = kvp.Value });
                     }
                 }
             }
-            catch (Exception ex)
+        }
+
+        public static EulaConfig Load(string projectFolder)
+        {
+            // Get config path in assembly directory
+            string assemblyDir = GetExecutingDirectory();
+            string configPath = Path.Combine(assemblyDir, $"{projectFolder}_EulaConfig.xml");
+
+            EulaConfig config = new EulaConfig(configPath);
+
+            if (File.Exists(configPath))
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading EULA config: {ex.Message}");
+                try
+                {
+                    XmlSerializer serializer = new XmlSerializer(typeof(EulaConfig));
+                    using (FileStream fs = new FileStream(configPath, FileMode.Open))
+                    {
+                        var loadedConfig = (EulaConfig)serializer.Deserialize(fs);
+                        if (loadedConfig != null)
+                        {
+                            // Transfer entries to our new config
+                            config.EulaEntries = loadedConfig.EulaEntries ?? new List<EulaEntry>();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error loading config: {ex.Message}");
+                }
             }
 
             return config;
         }
 
-        /// <summary>
-        /// Save the configuration to disk
-        /// </summary>
-        public void Save()
+        private static string GetExecutingDirectory()
         {
             try
             {
-                // Ensure directory exists
+                return Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            }
+            catch
+            {
+                return Directory.GetCurrentDirectory();
+            }
+        }
+
+        public bool Save()
+        {
+            try
+            {
+                // Skip saving if we have no entries
+                if (EulaEntries == null || EulaEntries.Count == 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("No entries to save!");
+                    return false;
+                }
+
+                // Create directory if needed
                 string directory = Path.GetDirectoryName(_configPath);
-                if (!Directory.Exists(directory))
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                 {
                     Directory.CreateDirectory(directory);
                 }
 
-                // Serialize to JSON
-                string json = JsonConvert.SerializeObject(this, Formatting.Indented);
-
-                // Write to file
-                File.WriteAllText(_configPath, json, Encoding.UTF8);
-
-                // Verify the file was created
-                if (File.Exists(_configPath))
+                // Simple approach to save the XML
+                XmlSerializer serializer = new XmlSerializer(typeof(EulaConfig));
+                using (FileStream fs = new FileStream(_configPath, FileMode.Create))
                 {
-                    System.Diagnostics.Debug.WriteLine($"Successfully saved EULA config to: {_configPath}");
+                    serializer.Serialize(fs, this);
                 }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"Failed to save EULA config to: {_configPath}");
-                }
+                return true;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error saving EULA config: {ex.Message}");
-                // Add more detailed error information
-                System.Diagnostics.Debug.WriteLine($"Path: {_configPath}");
-                System.Diagnostics.Debug.WriteLine($"Exception details: {ex}");
+                System.Diagnostics.Debug.WriteLine($"Error saving config: {ex.Message}");
+                return false;
             }
         }
+    }
+
+    [Serializable]
+    public class EulaEntry
+    {
+        [XmlAttribute("ProjectVersionKey")]
+        public string Key { get; set; }
+
+        [XmlAttribute("AccessCode")]
+        public string Value { get; set; }
     }
 }

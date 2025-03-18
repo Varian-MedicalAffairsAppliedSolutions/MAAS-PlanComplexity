@@ -32,7 +32,7 @@ namespace VMS.TPS
     {
         // Define the project information for EULA verification
         private const string PROJECT_NAME = "PlanComplexity";
-        private const string PROJECT_VERSION = "1.0.0";
+        private const string PROJECT_VERSION = "1.1.0";
         private const string GITHUB_PAGES_URL = "https://varian-medicalaffairsappliedsolutions.github.io/MAAS-PlanComplexity/";
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -40,16 +40,16 @@ namespace VMS.TPS
         {
             try
             {
-                // Check JotForm EULA acceptance first with version support
+                // Check license acceptance first with version support
                 var eulaVerifier = new EulaVerifier(PROJECT_NAME, PROJECT_VERSION, GITHUB_PAGES_URL);
 
-                // If the JotForm EULA hasn't been accepted for this version, show the verification dialog
+                // If the JotForm license hasn't been accepted for this version, show the verification dialog
                 if (!eulaVerifier.IsEulaAccepted())
                 {
                     MessageBox.Show(
-                        $"This version of {PROJECT_NAME} (v{PROJECT_VERSION}) requires EULA acceptance before use.\n\n" +
+                        $"This version of {PROJECT_NAME} (v{PROJECT_VERSION}) requires license acceptance before first use.\n\n" +
                         "You will be prompted to provide an access code. Please follow the instructions to obtain your code.",
-                        "EULA Acceptance Required",
+                        "License Acceptance Required",
                         MessageBoxButton.OK,
                         MessageBoxImage.Information);
 
@@ -71,9 +71,9 @@ namespace VMS.TPS
                     {
                         // User cancelled or provided invalid code
                         MessageBox.Show(
-                            "EULA acceptance is required to use this application.\n\n" +
+                            "License acceptance is required to use this application.\n\n" +
                             "The application will now close.",
-                            "EULA Not Accepted",
+                            "License Not Accepted",
                             MessageBoxButton.OK,
                             MessageBoxImage.Warning);
                         return;
@@ -105,7 +105,7 @@ namespace VMS.TPS
                 // Check exp date
                 if (exp < DateTime.Now && !foundNoExpire)
                 {
-                    MessageBox.Show("Application has expired. Newer builds with future expiration dates can be found here: https://github.com/Varian-Innovation-Center/MAAS-PlanComplexity");
+                    MessageBox.Show($"Application has expired. Newer builds with future expiration dates can be found here: {GITHUB_PAGES_URL}");
                     return;
                 }
 
@@ -120,12 +120,12 @@ namespace VMS.TPS
                 string msg = $"The current ModulationComplexity application is provided AS IS as a non-clinical, research only tool in evaluation only. The current " +
                 $"application will only be available until {exp.Date} after which the application will be unavailable. " +
                 "By Clicking 'Yes' you agree that this application will be evaluated and not utilized in providing planning decision support\n\n" +
-                "Newer builds with future expiration dates can be found here: https://github.com/Varian-Innovation-Center/MAAS-PlanComplexity\n\n" +
+                $"Newer builds with future expiration dates can be found here: {GITHUB_PAGES_URL}\n\n" +
                 "See the FAQ for more information on how to remove this pop-up and expiration";
 
                 string msg2 = $"Application will only be available until {exp.Date} after which the application will be unavailable. " +
                 "By Clicking 'Yes' you agree that this application will be evaluated and not utilized in providing planning decision support\n\n" +
-                "Newer builds with future expiration dates can be found here: https://github.com/Varian-Innovation-Center/MAAS-PlanComplexity\n\n" +
+                $"Newer builds with future expiration dates can be found here: {GITHUB_PAGES_URL} \n\n" +
                 "See the FAQ for more information on how to remove this pop-up and expiration";
 
                 if (!foundNoExpire)
