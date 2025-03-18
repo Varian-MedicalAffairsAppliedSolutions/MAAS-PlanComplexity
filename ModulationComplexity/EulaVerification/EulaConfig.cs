@@ -10,10 +10,10 @@ namespace MAAS.Common.EulaVerification
     [Serializable]
     public class EulaConfig
     {
-        // Important: The default constructor must initialize the list
         public EulaConfig()
         {
             EulaEntries = new List<EulaEntry>();
+            Settings = new ApplicationSettings(); // Initialize settings
         }
 
         // Constructor with config path
@@ -21,18 +21,20 @@ namespace MAAS.Common.EulaVerification
         {
             _configPath = configPath;
             EulaEntries = new List<EulaEntry>();
+            Settings = new ApplicationSettings(); // Initialize settings
         }
 
-        // This is the XML-serializable list
         [XmlArray("AcceptedEulas")]
         [XmlArrayItem("EulaEntry")]
         public List<EulaEntry> EulaEntries { get; set; }
 
-        // This is for easier access in code, but it's not serialized
+        // Add the ApplicationSettings property
+        [XmlElement("ApplicationSettings")]
+        public ApplicationSettings Settings { get; set; }
+
         [XmlIgnore]
         private Dictionary<string, string> _acceptedEulasDict;
 
-        // Path to the config file - not serialized
         [XmlIgnore]
         private string _configPath;
 
@@ -101,6 +103,12 @@ namespace MAAS.Common.EulaVerification
                         {
                             // Transfer entries to our new config
                             config.EulaEntries = loadedConfig.EulaEntries ?? new List<EulaEntry>();
+
+                            // Transfer settings if they exist
+                            if (loadedConfig.Settings != null)
+                            {
+                                config.Settings = loadedConfig.Settings;
+                            }
                         }
                     }
                 }
@@ -129,10 +137,11 @@ namespace MAAS.Common.EulaVerification
         {
             try
             {
-                // Skip saving if we have no entries
-                if (EulaEntries == null || EulaEntries.Count == 0)
+                // Modified to save even if there are no EULA entries but we have settings
+                if ((EulaEntries == null || EulaEntries.Count == 0) &&
+                    Settings == null)
                 {
-                    System.Diagnostics.Debug.WriteLine("No entries to save!");
+                    System.Diagnostics.Debug.WriteLine("No data to save!");
                     return false;
                 }
 
@@ -167,5 +176,23 @@ namespace MAAS.Common.EulaVerification
 
         [XmlAttribute("AccessCode")]
         public string Value { get; set; }
+    }
+
+    // Add this new class for application settings
+    [Serializable]
+    public class ApplicationSettings
+    {
+        public ApplicationSettings()
+        {
+            // Initialize defaults
+            Validated = false;
+            EULAAgreed = false;
+        }
+
+        [XmlAttribute("Validated")]
+        public bool Validated { get; set; }
+
+        [XmlAttribute("EULAAgreed")]
+        public bool EULAAgreed { get; set; }
     }
 }

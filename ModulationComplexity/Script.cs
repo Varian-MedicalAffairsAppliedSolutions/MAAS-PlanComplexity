@@ -16,7 +16,6 @@ using System.Windows.Forms;
 using MessageBox = System.Windows.MessageBox;
 using ViewModels;
 using ModulationComplexity.Models;
-using Newtonsoft.Json;
 using System.Globalization;
 
 using System.Windows.Media.Imaging;
@@ -32,7 +31,7 @@ namespace VMS.TPS
     {
         // Define the project information for EULA verification
         private const string PROJECT_NAME = "PlanComplexity";
-        private const string PROJECT_VERSION = "1.1.0";
+        private const string PROJECT_VERSION = "1.0.0";
         private const string GITHUB_PAGES_URL = "https://varian-medicalaffairsappliedsolutions.github.io/MAAS-PlanComplexity/";
 
         [MethodImpl(MethodImplOptions.NoInlining)]
@@ -43,9 +42,17 @@ namespace VMS.TPS
                 // Check license acceptance first with version support
                 var eulaVerifier = new EulaVerifier(PROJECT_NAME, PROJECT_VERSION, GITHUB_PAGES_URL);
 
+                // Get access to the EulaConfig
+                var eulaConfig = EulaConfig.Load(PROJECT_NAME);
+                if (eulaConfig.Settings == null)
+                {
+                    eulaConfig.Settings = new ApplicationSettings();
+                }
+
                 // If the JotForm license hasn't been accepted for this version, show the verification dialog
                 if (!eulaVerifier.IsEulaAccepted())
                 {
+                    // Keep all your existing EULA verification dialog code here
                     MessageBox.Show(
                         $"This version of {PROJECT_NAME} (v{PROJECT_VERSION}) requires license acceptance before first use.\n\n" +
                         "You will be prompted to provide an access code. Please follow the instructions to obtain your code.",
@@ -57,19 +64,16 @@ namespace VMS.TPS
                     BitmapImage qrCode = null;
                     try
                     {
-                        // Adjust the assembly name if needed to match your project
                         string assemblyName = Assembly.GetExecutingAssembly().GetName().Name;
                         qrCode = new BitmapImage(new Uri($"pack://application:,,,/{assemblyName};component/Resources/qrcode.bmp"));
                     }
                     catch (Exception ex)
                     {
-                        // If QR code loading fails, continue without it
                         System.Diagnostics.Debug.WriteLine($"Error loading QR code: {ex.Message}");
                     }
 
                     if (!eulaVerifier.ShowEulaDialog(qrCode))
                     {
-                        // User cancelled or provided invalid code
                         MessageBox.Show(
                             "License acceptance is required to use this application.\n\n" +
                             "The application will now close.",
@@ -85,11 +89,8 @@ namespace VMS.TPS
                 var noexp_path = Path.Combine(path, "NOEXPIRE");
                 bool foundNoExpire = File.Exists(noexp_path);
 
-                // search for json config in current dir
-                var json_path = Path.Combine(path, "config.json");
-                if (!File.Exists(json_path)) { throw new Exception($"Could not locate json path {json_path}"); }
-
-                var settings = JsonConvert.DeserializeObject<SettingsClass>(File.ReadAllText(json_path));
+                // Use the settings from the XML config instead of looking for JSON
+                var settings = eulaConfig.Settings;
 
                 if (context.Patient == null || context.PlanSetup == null)
                 {
@@ -109,13 +110,6 @@ namespace VMS.TPS
                     return;
                 }
 
-                // Since we're now using the JotForm EULA, we'll set EULAAgreed to true automatically
-                if (!settings.EULAAgreed)
-                {
-                    settings.EULAAgreed = true;
-                    File.WriteAllText(json_path, JsonConvert.SerializeObject(settings));
-                }
-
                 // Display opening msg
                 string msg = $"The current ModulationComplexity application is provided AS IS as a non-clinical, research only tool in evaluation only. The current " +
                 $"application will only be available until {exp.Date} after which the application will be unavailable. " +
@@ -132,14 +126,16 @@ namespace VMS.TPS
                 {
                     if (!settings.Validated)
                     {
+                        // Show the first-time message
                         var res = MessageBox.Show(msg, "Agreement  ", MessageBoxButton.YesNo);
                         if (res == MessageBoxResult.No)
                         {
                             return;
                         }
                     }
-                    else if (settings.Validated)
+                    else
                     {
+                        // Show the returning user message
                         var res = MessageBox.Show(msg2, "Agreement  ", MessageBoxButton.YesNo);
                         if (res == MessageBoxResult.No)
                         {

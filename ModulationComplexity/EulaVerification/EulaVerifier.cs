@@ -81,17 +81,17 @@ namespace MAAS.Common.EulaVerification
 
             // Check if any previous version has been accepted
             // This allows for backward compatibility with previous acceptances if desired
-            var majorVersion = GetMajorVersion(_version);
-            if (!string.IsNullOrEmpty(majorVersion))
+            var majorMinorVersion = GetMajorMinorVersion(_version);
+            if (!string.IsNullOrEmpty(majorMinorVersion))
             {
+                string exactVersionPattern = $"{_projectName}-{majorMinorVersion}";
                 foreach (var key in _config.AcceptedEulas.Keys)
                 {
-                    // If the key starts with the project name and has the same major version
-                    if (key.StartsWith($"{_projectName}-{majorVersion}"))
+                    // Only accept keys with exact major.minor version match
+                    if (key.StartsWith(exactVersionPattern))
                     {
                         string oldCode = _config.AcceptedEulas[key];
-                        System.Diagnostics.Debug.WriteLine($"Found previous version acceptance: {key}");
-                        // Optionally validate with older version's code
+                        System.Diagnostics.Debug.WriteLine($"Found exact major.minor version acceptance: {key}");
                         return true;
                     }
                 }
@@ -110,16 +110,18 @@ namespace MAAS.Common.EulaVerification
         }
 
         /// <summary>
-        /// Extract the major version number
+        /// Extract the major.minor version string
         /// </summary>
-        private string GetMajorVersion(string version)
+        private string GetMajorMinorVersion(string version)
         {
             if (string.IsNullOrEmpty(version))
                 return string.Empty;
 
-            // Extract the major version (e.g., "16.1.0" -> "16")
+            // Extract the major.minor version (e.g., "16.1.0" -> "16.1")
             var parts = version.Split('.');
-            if (parts.Length > 0)
+            if (parts.Length >= 2)
+                return $"{parts[0]}.{parts[1]}";
+            else if (parts.Length == 1)
                 return parts[0];
 
             return version;
@@ -334,6 +336,12 @@ namespace MAAS.Common.EulaVerification
 
                     // Also update the dictionary for in-memory use
                     _config.AcceptedEulas[configKey] = code;
+
+                    // Set EULAAgreed to true since they've entered a valid code
+                    if (_config.Settings != null)
+                    {
+                        _config.Settings.EULAAgreed = true;
+                    }
 
                     // Try to save
                     bool saveSuccess = _config.Save();
