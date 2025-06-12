@@ -1,4 +1,4 @@
-name: Build ESAPI Script - v15.6
+name: Build ESAPI Script - v18.0
 
 on:
   workflow_dispatch:
@@ -10,10 +10,10 @@ on:
 
 jobs:
   build:
-    name: Build ESAPI Script - v15.6
+    name: Build ESAPI Script - v18.0
     runs-on: windows-2022
     env:
-      GITHUB_WORKSPACE_PACKAGES_PATH: packages\ESAPI.15.6.0\lib\net45\
+      GITHUB_WORKSPACE_PACKAGES_PATH: packages\ESAPI.18.0.1\lib\net48\
       PROJECT_NAME: PlanComplexity
       FLDR_SLN_CSPROJ_NAME: ModulationComplexity
       MAJOR_VERSION: 1
@@ -34,6 +34,13 @@ jobs:
     - name: Navigate to Workspace
       run: cd $GITHUB_WORKSPACE
 
+    - name: Update Target Framework Version to 4.8
+      uses: Nambers/ReplaceStringInFile@v1.1
+      with:
+        path: .\ModulationComplexity\ModulationComplexity.csproj
+        oldString: "TargetFrameworkVersion>v[\\d\\.]+<"
+        newString: 'TargetFrameworkVersion>v4.8<'
+
     - name: Update AssemblyInfo.cs
       id: update_assembly_info
       run: |
@@ -49,7 +56,7 @@ jobs:
       uses: NuGet/setup-nuget@v2
       with:
         nuget-version: latest
-        
+
     - name: Download nuget packages
       run: nuget install .\${{ env.FLDR_SLN_CSPROJ_NAME }}\packages.config -OutputDirectory ${{ env.FLDR_SLN_CSPROJ_NAME }}\packages
 
@@ -62,33 +69,33 @@ jobs:
         -StorePasswordInClearText
 
     - name: Download ESAPI package
-      run: nuget install ESAPI -Version 15.6.0 -OutputDirectory ${{ env.FLDR_SLN_CSPROJ_NAME }}\packages 
+      run: nuget install ESAPI -Version 18.0.0.1 -OutputDirectory ${{ env.FLDR_SLN_CSPROJ_NAME }}/packages
 
     - name: Update hint paths in the csproj file
       run: |
         .\.github\workflows\Update-EsapiHintPaths.ps1 `
         -CsprojFilePath .\${{ env.FLDR_SLN_CSPROJ_NAME }}\ `
         -CsprojFileName ${{ env.FLDR_SLN_CSPROJ_NAME }}.csproj
-    
+
     - name: Build Solution
-      run: msbuild.exe .\${{ env.FLDR_SLN_CSPROJ_NAME }}\${{ env.FLDR_SLN_CSPROJ_NAME }}.sln /nologo /nr:false /p:DeleteExistingFiles=True /p:platform="x64" /p:configuration="${{ env.CONFIGURATION }}"
-        
+      run: msbuild.exe .\${{ env.FLDR_SLN_CSPROJ_NAME }}\${{ env.FLDR_SLN_CSPROJ_NAME }}.csproj /nologo /nr:false /p:DeleteExistingFiles=True /p:platform="x64" /p:configuration="Release"
+
     - name: Zip
       run: |
         Compress-Archive `
           -Path ".\${{ env.FLDR_SLN_CSPROJ_NAME }}\bin\${{ env.CONFIGURATION }}\*" `
-          -DestinationPath "${{ github.workspace }}/${{env.PROJECT_NAME}}${{ steps.update_assembly_info.outputs.RELEASE_FILE_NAME }}-EclipseV156.zip"
+          -DestinationPath "${{ github.workspace }}/${{env.PROJECT_NAME}}${{ steps.update_assembly_info.outputs.RELEASE_FILE_NAME }}-EclipseV180.zip"
     
     - name: Create Release
       uses: softprops/action-gh-release@v2.0.9
       with:
-        name: ${{env.PROJECT_NAME}}-${{ steps.update_assembly_info.outputs.RELEASE_NAME }}-EclipseV15.6
-        tag_name: ${{env.PROJECT_NAME}}-${{ steps.update_assembly_info.outputs.RELEASE_NAME }}-EclipseV15.6
+        name: ${{env.PROJECT_NAME}}-${{ steps.update_assembly_info.outputs.RELEASE_NAME }}-EclipseV18.0
+        tag_name: ${{env.PROJECT_NAME}}-${{ steps.update_assembly_info.outputs.RELEASE_NAME }}-EclipseV18.0
         token: ${{ secrets.GITHUB_TOKEN }}
         draft: false
         prerelease: false
         body: |
           This is an official release of the **`${{ env.PROJECT_NAME }}`** project.
-          Supported Eclipse version: `v15.6`.
+          Supported Eclipse version: `v18.0`.
           The generated dll is valid until `${{ github.event.inputs.dateInput }}`.
-        files: ${{ github.workspace }}/${{env.PROJECT_NAME}}${{ steps.update_assembly_info.outputs.RELEASE_FILE_NAME }}-EclipseV156.zip
+        files: ${{ github.workspace }}/${{env.PROJECT_NAME}}${{ steps.update_assembly_info.outputs.RELEASE_FILE_NAME }}-EclipseV180.zip
