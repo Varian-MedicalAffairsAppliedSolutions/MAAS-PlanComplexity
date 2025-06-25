@@ -13,7 +13,7 @@ jobs:
     name: Build ESAPI Script - v18.0
     runs-on: windows-2022
     env:
-      GITHUB_WORKSPACE_PACKAGES_PATH: packages\ESAPI.18.0.1\lib\net48\
+      GITHUB_WORKSPACE_PACKAGES_PATH: packages\ESAPI.18.0.0.1\lib\net48\
       PROJECT_NAME: PlanComplexity
       FLDR_SLN_CSPROJ_NAME: ModulationComplexity
       MAJOR_VERSION: 1
@@ -69,7 +69,7 @@ jobs:
         -StorePasswordInClearText
 
     - name: Download ESAPI package
-      run: nuget install ESAPI -Version 18.0.1 -OutputDirectory ${{ env.FLDR_SLN_CSPROJ_NAME }}/packages
+      run: nuget install ESAPI -Version 18.0.0.1 -OutputDirectory ${{ env.FLDR_SLN_CSPROJ_NAME }}/packages
 
     - name: Update hint paths in the csproj file
       run: |
