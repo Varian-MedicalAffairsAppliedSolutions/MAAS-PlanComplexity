@@ -1,8 +1,3 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 name: Build ESAPI Script - v16.1
 
 on:
@@ -11,19 +6,21 @@ on:
       dateInput:
         description: 'Expiration Date'
         required: true
-        default: '1/1/2024'
+        default: '12/31/2025'
 
 jobs:
   build:
     name: Build ESAPI Script - v16.1
-    runs-on: windows-2019
+    runs-on: windows-2022
     env:
       GITHUB_WORKSPACE_PACKAGES_PATH: packages\ESAPI.16.1.0\lib\net461\
       PROJECT_NAME: PlanComplexity
+      FLDR_SLN_CSPROJ_NAME: ModulationComplexity
       MAJOR_VERSION: 1
       MINOR_VERSION: 0
       PATCH_VERSION: 0
       BUILD_NUMBER: ${{ github.run_number }}
+      CONFIGURATION: Release
 
     steps:
     - name: Checkout
@@ -32,7 +29,7 @@ jobs:
         fetch-depth: 0
 
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v2
 
     - name: Navigate to Workspace
       run: cd $GITHUB_WORKSPACE
@@ -48,15 +45,23 @@ jobs:
       id: update_assembly_info
       run: |
         .\.github\workflows\Update-AssemblyInfo.ps1 `
-          -AssemblyInfoFilePath .\ModulationComplexity\Properties\AssemblyInfo.cs `
+          -AssemblyInfoFilePath .\${{ env.FLDR_SLN_CSPROJ_NAME }}\Properties\AssemblyInfo.cs `
           -ExpirationDate "${{ github.event.inputs.dateInput }}" `
           -MajorVersion ${{ env.MAJOR_VERSION }} `
           -MinorVersion ${{ env.MINOR_VERSION }} `
           -PatchVersion ${{ env.PATCH_VERSION }} `
           -BuildNumber ${{ env.BUILD_NUMBER }}
 
+    - name: Setup NuGet.exe for use with actions
+      uses: NuGet/setup-nuget@v2
+      with:
+        nuget-version: latest
+
     - name: Download nuget packages
-      run: nuget install .\ModulationComplexity\packages.config -OutputDirectory ModulationComplexity\packages
+      run: nuget install .\${{ env.FLDR_SLN_CSPROJ_NAME }}\packages.config -OutputDirectory ${{ env.FLDR_SLN_CSPROJ_NAME }}\packages
+
+    - name: Download Microsoft NETFramework ReferenceAssemblies for v4.6.1
+      run: nuget install Microsoft.NETFramework.ReferenceAssemblies.net461 -OutputDirectory .\${{env.FLDR_SLN_CSPROJ_NAME}}\packages
 
     - name: Add VIC GitHub NuGet repository
       run: nuget source add
@@ -67,29 +72,28 @@ jobs:
         -StorePasswordInClearText
 
     - name: Download ESAPI package
-      run: nuget install ESAPI -Version 16.1.0 -OutputDirectory ModulationComplexity\packages
-
+      run: nuget install ESAPI -Version 16.1.0 -OutputDirectory ${{ env.FLDR_SLN_CSPROJ_NAME }}\packages
 
     - name: Update hint paths in the csproj file
       run: |
         .\.github\workflows\Update-EsapiHintPaths.ps1 `
-        -CsprojFilePath .\ModulationComplexity\ `
-        -CsprojFileName ModulationComplexity.csproj
+        -CsprojFilePath .\${{ env.FLDR_SLN_CSPROJ_NAME }}\ `
+        -CsprojFileName ${{ env.FLDR_SLN_CSPROJ_NAME }}.csproj
 
     - name: Build Solution
-      run: msbuild.exe .\ModulationComplexity\ModulationComplexity.sln /nologo /nr:false /p:DeleteExistingFiles=True /p:platform="x64" /p:configuration="Release"
+      run: msbuild.exe .\${{ env.FLDR_SLN_CSPROJ_NAME }}\${{ env.FLDR_SLN_CSPROJ_NAME }}.sln /nologo /nr:false /p:DeleteExistingFiles=True /p:platform="x64" /p:configuration="${{ env.CONFIGURATION }}"
 
     - name: Zip
       run: |
         Compress-Archive `
-          -Path ".\ModulationComplexity\bin\Debug\*" `
+          -Path ".\${{ env.FLDR_SLN_CSPROJ_NAME }}\bin\${{ env.CONFIGURATION }}\*" `
           -DestinationPath "${{ github.workspace }}/${{env.PROJECT_NAME}}${{ steps.update_assembly_info.outputs.RELEASE_FILE_NAME }}-EclipseV161.zip"
     
     - name: Create Release
-      uses: softprops/action-gh-release@v0.1.13
+      uses: softprops/action-gh-release@v2.0.9
       with:
-        name: ${{env.PROJECT_NAME}}${{ steps.update_assembly_info.outputs.RELEASE_NAME }}-EclipseV16.1
-        tag_name: ${{env.PROJECT_NAME}}${{ steps.update_assembly_info.outputs.RELEASE_NAME }}-EclipseV16.1
+        name: ${{env.PROJECT_NAME}}-${{ steps.update_assembly_info.outputs.RELEASE_NAME }}-EclipseV16.1
+        tag_name: ${{env.PROJECT_NAME}}-${{ steps.update_assembly_info.outputs.RELEASE_NAME }}-EclipseV16.1
         token: ${{ secrets.GITHUB_TOKEN }}
         draft: false
         prerelease: false
