@@ -178,7 +178,8 @@ namespace ModulationComplexity.Models
             Dictionary<string, List<double[]>> results = new Dictionary<string, List<double[]>>();
 
             // For each beam in the plan, calculate BI, BA and BM parameters
-            foreach (var beam in plan.Beams)
+            // Setup fields don't have meaningful MLC/control point data for these metrics.
+            foreach (var beam in plan.Beams.Where(b => !b.IsSetupField))
             {
                 // Millennium120 leaf thicknesses
                 this.leafThicknessesInMM = new double[] { 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 5.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0 };
